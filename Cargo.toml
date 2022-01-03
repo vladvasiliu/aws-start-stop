@@ -9,7 +9,7 @@ authors = ["Vlad Vasiliu"]
 [dependencies]
 aws-config = "0.3.0"
 aws-sdk-ec2 = "0.3.0"
-clap = { version = "3.0.0-rc.13", features = ["cargo", "env", "regex"] }
+clap = { version = "3.0.0", features = ["cargo", "env", "regex"] }
 color-eyre = "0.5"
 regex = { version = "1", features = ["perf-dfa"] }
 tokio = { version = "~1", features = ["macros", "parking_lot", "rt", "time"] }
