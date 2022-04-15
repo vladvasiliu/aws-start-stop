@@ -1,4 +1,4 @@
-use clap::{app_from_crate, AppSettings, Arg};
+use clap::{command, AppSettings, Arg};
 use color_eyre::eyre::eyre;
 use color_eyre::Report;
 use std::str::FromStr;
@@ -36,7 +36,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_args() -> Self {
-        let matches = app_from_crate!()
+        let matches = command!()
             .setting(AppSettings::DeriveDisplayOrder)
             .term_width(120)
             .args(&[
