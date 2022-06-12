@@ -3,7 +3,7 @@ use color_eyre::eyre::eyre;
 use color_eyre::Report;
 use std::str::FromStr;
 
-#[derive(Debug, std::cmp::PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Action {
     Start,
     Stop,
@@ -32,6 +32,7 @@ pub struct Config {
     pub action: Action,
     pub instance_id: String,
     pub timeout: u64,
+    pub wait_for_ssm: bool,
 }
 
 impl Config {
@@ -65,17 +66,25 @@ impl Config {
                     .forbid_empty_values(true)
                     .default_value("120")
                     .help("How long to wait for the action to complete"),
+                Arg::new("wait-for-ssm")
+                    .short('s')
+                    .long("wait-for-ssm")
+                    .takes_value(false)
+                    .required(false)
+                    .help("Wait for the instance to connect to SSM"),
             ])
             .get_matches();
 
         let action = matches.value_of_t_or_exit("action");
         let instance_id = matches.value_of_t_or_exit("instance");
         let timeout = matches.value_of_t_or_exit("timeout");
+        let wait_for_ssm = matches.is_present("wait-for-ssm");
 
         Self {
             action,
             instance_id,
             timeout,
+            wait_for_ssm,
         }
     }
 }

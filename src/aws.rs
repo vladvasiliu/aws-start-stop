@@ -1,6 +1,7 @@
 use color_eyre::Result;
 
 use aws_sdk_ec2::model::InstanceStateName;
+use aws_sdk_ssm::model::ConnectionStatus;
 use color_eyre::eyre::eyre;
 use tokio::time::Duration;
 
@@ -24,14 +25,14 @@ impl Instance {
     }
 }
 
-pub struct AwsClient {
+pub struct AwsEc2Client {
     client: aws_sdk_ec2::client::Client,
     instance_id: String,
     target_state: InstanceStateName,
     wait: Duration,
 }
 
-impl AwsClient {
+impl AwsEc2Client {
     pub fn new(
         client: aws_sdk_ec2::client::Client,
         instance_id: &str,
@@ -190,5 +191,46 @@ fn check_state(
             "The desired state ({}) is invalid",
             desired_state.as_str()
         ))
+    }
+}
+
+pub struct AwsSsmClient {
+    pub client: aws_sdk_ssm::client::Client,
+    pub instance_id: String,
+    pub wait: Duration,
+}
+
+impl AwsSsmClient {
+    async fn get_connection_status(&self) -> Result<bool> {
+        let res = self
+            .client
+            .get_connection_status()
+            .target(&self.instance_id)
+            .send()
+            .await?;
+
+        match res.status {
+            None => Err(eyre!("SSM GetConnectionStatus returned nothing")),
+            Some(status) => match status {
+                ConnectionStatus::Connected => Ok(true),
+                ConnectionStatus::NotConnected => Ok(false),
+                ConnectionStatus::Unknown(u) => Err(eyre!(
+                    "SSM GetConnectionStatus returned an unknown status: {}",
+                    u
+                )),
+                _ => Err(eyre!("SSM GetConnectionStatus returned an unknown status.",)),
+            },
+        }
+    }
+
+    pub async fn wait_for_connection(&self) -> Result<()> {
+        let mut wait_interval = tokio::time::interval(self.wait);
+        loop {
+            wait_interval.tick().await;
+            let connection_status = self.get_connection_status().await?;
+            if connection_status {
+                return Ok(());
+            }
+        }
     }
 }
