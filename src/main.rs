@@ -11,7 +11,7 @@ use tokio::time::{timeout, Duration};
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     color_eyre::install()?;
-    let config = Config::from_args();
+    let config = Config::from_args()?;
 
     let res = timeout(Duration::from_secs(config.timeout), work(config)).await;
 

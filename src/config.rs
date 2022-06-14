@@ -1,28 +1,21 @@
-use clap::{command, AppSettings, Arg};
-use color_eyre::eyre::eyre;
-use color_eyre::Report;
-use std::str::FromStr;
+use clap::{command, AppSettings, Arg, PossibleValue};
+use color_eyre::{eyre::eyre, Result};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Action {
     Start,
     Stop,
 }
 
-impl Action {
-    pub fn arg_values() -> [&'static str; 2] {
-        ["start", "stop"]
+impl clap::ValueEnum for Action {
+    fn value_variants<'a>() -> &'a [Self] {
+        &[Self::Start, Self::Stop]
     }
-}
 
-impl FromStr for Action {
-    type Err = Report;
-
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        match value.to_ascii_lowercase().as_str() {
-            "start" => Ok(Self::Start),
-            "stop" => Ok(Self::Stop),
-            _ => Err(eyre!("Incorrect action")),
+    fn to_possible_value<'a>(&self) -> Option<PossibleValue<'a>> {
+        match self {
+            Self::Start => Some(PossibleValue::new("start")),
+            Self::Stop => Some(PossibleValue::new("stop")),
         }
     }
 }
@@ -36,7 +29,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn from_args() -> Self {
+    pub fn from_args() -> Result<Self> {
         let matches = command!()
             .setting(AppSettings::DeriveDisplayOrder)
             .term_width(120)
@@ -45,15 +38,14 @@ impl Config {
                     .takes_value(true)
                     .ignore_case(true)
                     .value_name("ACTION")
-                    .possible_values(Action::arg_values())
                     .required(true)
-                    .forbid_empty_values(true)
+                    .value_parser(clap::builder::EnumValueParser::<Action>::new())
                     .help("Action"),
                 Arg::new("instance")
                     .takes_value(true)
                     .value_name("INSTANCE_ID")
                     .required(true)
-                    .forbid_empty_values(true)
+                    .value_parser(clap::builder::NonEmptyStringValueParser::new())
                     .help("Instance ID"),
                 Arg::new("timeout")
                     .short('t')
@@ -61,9 +53,8 @@ impl Config {
                     .takes_value(true)
                     .value_name("TIMEOUT")
                     .required(false)
-                    .multiple_occurrences(false)
                     .multiple_values(false)
-                    .forbid_empty_values(true)
+                    .value_parser(clap::builder::RangedU64ValueParser::<u64>::new())
                     .default_value("120")
                     .help("How long to wait for the action to complete"),
                 Arg::new("wait-for-ssm")
@@ -75,16 +66,24 @@ impl Config {
             ])
             .get_matches();
 
-        let action = matches.value_of_t_or_exit("action");
-        let instance_id = matches.value_of_t_or_exit("instance");
-        let timeout = matches.value_of_t_or_exit("timeout");
-        let wait_for_ssm = matches.is_present("wait-for-ssm");
+        let action = matches
+            .get_one::<Action>("action")
+            .ok_or_else(|| eyre!("Missing action"))?
+            .clone();
+        let instance_id = matches
+            .get_one::<String>("instance")
+            .ok_or_else(|| eyre!("Missing instance id"))?
+            .clone();
+        let timeout = *matches
+            .get_one::<u64>("timeout")
+            .ok_or_else(|| eyre!("Missing timeout"))?;
+        let wait_for_ssm = matches.contains_id("wait-for-ssm");
 
-        Self {
+        Ok(Self {
             action,
             instance_id,
             timeout,
             wait_for_ssm,
-        }
+        })
     }
 }

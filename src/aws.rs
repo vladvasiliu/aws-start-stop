@@ -56,7 +56,7 @@ impl AwsEc2Client {
             .await?;
 
         // Do a sanity check. There should be exactly one instance, no more, no less
-        let mut reservations = response.reservations.unwrap_or_else(Vec::new);
+        let mut reservations = response.reservations.unwrap_or_default();
         if reservations.is_empty() {
             return Err(eyre!("Instance not found"));
         } else if reservations.len() > 1 || response.next_token.is_some() {
@@ -65,7 +65,7 @@ impl AwsEc2Client {
 
         let reservation = reservations.pop().unwrap();
 
-        let mut instance_vec = reservation.instances.unwrap_or_else(Vec::new);
+        let mut instance_vec = reservation.instances.unwrap_or_default();
 
         if instance_vec.is_empty() {
             return Err(eyre!("Instance not found"));
@@ -87,7 +87,7 @@ impl AwsEc2Client {
             .await?;
 
         // Sanity check
-        let mut state_changes = response.starting_instances.unwrap_or_else(Vec::new);
+        let mut state_changes = response.starting_instances.unwrap_or_default();
         if state_changes.is_empty() {
             return Err(eyre!("Instance not found"));
         } else if state_changes.len() > 1 {
@@ -119,7 +119,7 @@ impl AwsEc2Client {
             .await?;
 
         // Sanity check
-        let mut state_changes = response.stopping_instances.unwrap_or_else(Vec::new);
+        let mut state_changes = response.stopping_instances.unwrap_or_default();
         if state_changes.is_empty() {
             return Err(eyre!("Instance not found"));
         } else if state_changes.len() > 1 {

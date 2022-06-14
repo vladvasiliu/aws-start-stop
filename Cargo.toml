@@ -1,6 +1,6 @@
 [package]
 name = "aws-start-stop"
-version = "0.9.0"
+version = "0.9.1"
 edition = "2021"
 authors = ["Vlad Vasiliu"]
 
@@ -10,7 +10,7 @@ authors = ["Vlad Vasiliu"]
 aws-config = "0.13"
 aws-sdk-ec2 = "0.13"
 aws-sdk-ssm = "0.13"
-clap = { version = "3", features = ["cargo", "env", "regex"] }
+clap = { version = "3.2", features = ["cargo", "env", "regex"] }
 color-eyre = "0.5"
 regex = { version = "1", features = ["perf-dfa"] }
 tokio = { version = "1", features = ["macros", "parking_lot", "rt", "time"] }
