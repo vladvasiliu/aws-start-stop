@@ -1,4 +1,4 @@
-#aws-start-stop
+# aws-start-stop
 
 Simple program to start and stop aws instances.
 
