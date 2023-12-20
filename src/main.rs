@@ -3,7 +3,8 @@ mod config;
 
 use crate::aws::{AwsEc2Client, AwsSsmClient};
 use crate::config::{Action, Config};
-use aws_sdk_ec2::model::InstanceStateName;
+use aws_config::BehaviorVersion;
+use aws_sdk_ec2::types::InstanceStateName;
 use color_eyre::Result;
 use std::process::exit;
 use tokio::time::{timeout, Duration};
@@ -37,7 +38,7 @@ async fn work(config: Config) -> Result<()> {
         Action::Stop => InstanceStateName::Stopped,
         Action::Start => InstanceStateName::Running,
     };
-    let aws_config = aws_config::load_from_env().await;
+    let aws_config = aws_config::load_defaults(BehaviorVersion::latest()).await;
 
     let aws_ec2_client = AwsEc2Client::new(
         aws_sdk_ec2::client::Client::new(&aws_config),

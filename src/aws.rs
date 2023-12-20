@@ -1,11 +1,11 @@
 use color_eyre::Result;
 
-use aws_sdk_ec2::model::InstanceStateName;
-use aws_sdk_ssm::model::ConnectionStatus;
+use aws_sdk_ec2::types::InstanceStateName;
+use aws_sdk_ssm::types::ConnectionStatus;
 use color_eyre::eyre::eyre;
 use tokio::time::Duration;
 
-pub struct Instance(aws_sdk_ec2::model::Instance);
+pub struct Instance(aws_sdk_ec2::types::Instance);
 
 impl Instance {
     pub fn state(&self) -> &InstanceStateName {
@@ -214,11 +214,10 @@ impl AwsSsmClient {
             Some(status) => match status {
                 ConnectionStatus::Connected => Ok(true),
                 ConnectionStatus::NotConnected => Ok(false),
-                ConnectionStatus::Unknown(u) => Err(eyre!(
+                _ => Err(eyre!(
                     "SSM GetConnectionStatus returned an unknown status: {}",
-                    u
+                    status.as_str()
                 )),
-                _ => Err(eyre!("SSM GetConnectionStatus returned an unknown status.",)),
             },
         }
     }
